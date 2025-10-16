@@ -56,7 +56,7 @@ Ensure you have the following installed:
 ### Steps
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<your-username>/ADOR.git
+   git clone https://github.com/Yashydv2027/ADOR.git
    cd ADOR
    ```
 
