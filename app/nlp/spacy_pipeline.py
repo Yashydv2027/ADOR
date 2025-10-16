@@ -50,32 +50,32 @@ class SpacyNERPipeline:
             })
         return entities
     
-    # def _get_confidence(self, ent) -> float:
-    #     """
-    #     Calculate confidence score for entity
-    #     Uses various heuristics since spaCy doesn't provide direct confidence
-    #     """
-    #     # Base confidence by entity type
-    #     confidence_map = {
-    #         'ORG': 0.85,      # Organizations (companies)
-    #         'PERSON': 0.80,    # Person names
-    #         'MONEY': 0.90,     # Monetary values
-    #         'DATE': 0.85,      # Dates
-    #         'PERCENT': 0.88,   # Percentages
-    #         'CARDINAL': 0.75,  # Numbers
-    #         'GPE': 0.82,       # Geopolitical entities
-    #         'PRODUCT': 0.78,   # Products
-    #     }
+    def _get_confidence(self, ent) -> float:
+        """
+        Calculate confidence score for entity
+        Uses various heuristics since spaCy doesn't provide direct confidence
+        """
+        # Base confidence by entity type
+        confidence_map = {
+            'ORG': 0.85,      # Organizations (companies)
+            'PERSON': 0.80,    # Person names
+            'MONEY': 0.90,     # Monetary values
+            'DATE': 0.85,      # Dates
+            'PERCENT': 0.88,   # Percentages
+            'CARDINAL': 0.75,  # Numbers
+            'GPE': 0.82,       # Geopolitical entities
+            'PRODUCT': 0.78,   # Products
+        }
 
-    #     base_confidence = confidence_map.get(ent.label_, 0.70)
+        base_confidence = confidence_map.get(ent.label_, 0.70)
 
-    #     # Adjust based on entity length (longer entities often more reliable)
-    #     if len(ent.text) > 15:
-    #         base_confidence += 0.05
-    #     elif len(ent.text) < 3:
-    #         base_confidence -= 0.10
+        # Adjust based on entity length (longer entities often more reliable)
+        if len(ent.text) > 15:
+            base_confidence += 0.05
+        elif len(ent.text) < 3:
+            base_confidence -= 0.10
 
-    #     return min(0.95, max(0.50, base_confidence))
+        return min(0.95, max(0.50, base_confidence))
 
     def extract_financial_entities(self, text: str) -> Dict[str, List[str]]:
         """

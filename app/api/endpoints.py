@@ -1,6 +1,6 @@
 # app/api/endpoints.py
 """
-Main API endpoints for document extraction - FIXED
+Main API endpoints for document extraction - FINAL FIXED VERSION
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import Dict, Any
@@ -24,22 +24,37 @@ async def extract_entities(file: UploadFile = File(...)) -> Dict[str, Any]:
         content = await file.read()
         filename = file.filename.lower()
 
+        # Initialize text variable
+        text = ""
+
         # Extract entities based on file type
         if filename.endswith('.docx'):
             parser = DocxParser()
             entities = parser.parse(content)
             extraction_method = "rule-based"
 
+            # Extract text from DOCX
+            from docx import Document
+            from io import BytesIO
+            doc = Document(BytesIO(content))
+            text = '\n'.join([para.text for para in doc.paragraphs])
+
         elif filename.endswith('.txt'):
+            # Decode text content
             text = content.decode('utf-8', errors='ignore')
+
+            # Extract entities using NER
             ner = ChatNER()
             entities = ner.extract(text)
             extraction_method = "ner-model"
 
         elif filename.endswith('.pdf'):
+            # Extract using LLM
             pdf_parser = PdfLLM()
             entities = pdf_parser.extract(content)
             extraction_method = "llm-extraction"
+
+            # Get full text from entities
             text = entities.pop('_full_text', '')
 
         else:
@@ -48,14 +63,9 @@ async def extract_entities(file: UploadFile = File(...)) -> Dict[str, Any]:
                 detail="Unsupported file type. Supported: DOCX, TXT, PDF"
             )
 
-        # Extract full text
-        if filename.endswith('.docx'):
-            from docx import Document
-            from io import BytesIO
-            doc = Document(BytesIO(content))
-            text = '\n'.join([para.text for para in doc.paragraphs])
-        elif filename.endswith('.txt'):
-            text = content.decode('utf-8', errors='ignore')
+        # Ensure text is not empty
+        if not text or len(text.strip()) < 10:
+            text = "Document text could not be extracted or is too short."
 
         # Classify document
         classifier = DocumentClassifier()
@@ -69,7 +79,7 @@ async def extract_entities(file: UploadFile = File(...)) -> Dict[str, Any]:
         topic_modeller = TopicModeller()
         topics = topic_modeller.extract_topics(text)
 
-        # Format and return result - FIXED: Added filename parameter
+        # Format and return result
         formatter = EntityFormatter()
         result = formatter.format({
             'file_type': filename.split('.')[-1].upper(),
@@ -85,6 +95,9 @@ async def extract_entities(file: UploadFile = File(...)) -> Dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Error processing document: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Error processing document: {str(e)}"
